@@ -5,6 +5,8 @@ from PyQt5.QtWidgets import QMessageBox, QDesktopWidget
 import ctypes
 import sys
 from qt.QtSetupWindow import UiSetupForm
+from qt.QtAboutWindow import UiAboutForm
+from scripts.open_manual import open_the_manual
 
 
 # from scripts.beeper import beep
@@ -132,7 +134,7 @@ class UiQtMainWindow(QtWidgets.QMainWindow):
 
     def __retranslate_ui(self) -> None:
         _translate = QtCore.QCoreApplication.translate
-        self.setWindowTitle(_translate("QtMainWindow", "VDA"))
+        self.setWindowTitle(_translate("QtMainWindow", "VCVA"))
         self.nextPushButton.setText(_translate("QtMainWindow", "Next->"))
         self.runPushButton.setText(_translate("QtMainWindow", "Run"))
         self.menuFile.setTitle(_translate("QtMainWindow", "File"))
@@ -154,20 +156,20 @@ class UiQtMainWindow(QtWidgets.QMainWindow):
 
     def __set_top_hint(self, state: bool = True) -> None:
         if state:
-            self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+            self.setWindowFlags(int(self.windowFlags()) | QtCore.Qt.WindowStaysOnTopHint)
         else:
-            self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowStaysOnTopHint)
+            self.setWindowFlags(int(self.windowFlags()) & ~QtCore.Qt.WindowStaysOnTopHint)
 
     def __set_all_bindings(self):
         # self.actionRun.triggered.connect()
         # self.actionAbort.triggered.connect()
+
         self.actionSetup.triggered.connect(lambda: self.__open_setup())
-        self.actionExit.triggered.connect(lambda: self.close())
+        self.actionExit.triggered.connect(lambda: self.__close())
 
-        # self.actionAbout.triggered.connect()
-        # self.actionManual.triggered.connect()
+        self.actionAbout.triggered.connect(lambda: self.__open_about())
+        self.actionManual.triggered.connect(lambda: self.__open_manual())
 
-        # self.actionExit.triggered.connect()
         # self.runPushButton.clicked.connect()
         self.nextPushButton.clicked.connect(self.__test)
 
@@ -193,7 +195,11 @@ class UiQtMainWindow(QtWidgets.QMainWindow):
                 x = screen.width() - size.width()
             self.move(x, y)
 
+    def __close(self):
+        self.close()
+
     def closeEvent(self, event):
+
         if self.stage_of_run:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Warning)
@@ -206,13 +212,18 @@ class UiQtMainWindow(QtWidgets.QMainWindow):
             reply = msg.exec_()
 
             if reply == QMessageBox.Yes:
+                self.__close_all_windows()
                 event.accept()
             else:
                 event.ignore()
         else:
+            self.__close_all_windows()
             event.accept()
 
-    def __open_setup(self):
+    def __close_all_windows(self):
+        self.about_window = None
+
+    def __open_setup(self) -> None:
         if self.setup_window is None:
             self.setup_window = UiSetupForm()
             self.setup_window.setWindowModality(QtCore.Qt.ApplicationModal)
@@ -221,6 +232,17 @@ class UiQtMainWindow(QtWidgets.QMainWindow):
             self.setup_window.setWindowModality(QtCore.Qt.ApplicationModal)
             self.setup_window.update_data()
             self.setup_window.show()
+
+    def __open_about(self):
+        if self.about_window is None:
+            self.about_window = UiAboutForm()
+            self.about_window.show()
+        else:
+            self.about_window.show()
+
+    @staticmethod
+    def __open_manual():
+        open_the_manual()
 
     @staticmethod
     def __test():
