@@ -14,7 +14,6 @@ from PyQt5.QtWidgets import QFileDialog
 from database.SQLiteAgent import SQLiteAgent
 from scripts.path import the_local_path
 
-
 class UiSetupForm(QtWidgets.QWidget):
 
     def __init__(self, ):

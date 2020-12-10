@@ -7,9 +7,7 @@ import sys
 from qt.QtSetupWindow import UiSetupForm
 from qt.QtAboutWindow import UiAboutForm
 from scripts.open_manual import open_the_manual
-
-
-# from scripts.beeper import beep
+from scripts.the_process_logic import MainLogicProcess
 
 
 class UiQtMainWindow(QtWidgets.QMainWindow):
@@ -17,11 +15,8 @@ class UiQtMainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setup_window = None
-        self.about_window = None
-        self.manual_window = None
         self.stage_of_run = 0
-
+        self.executor = MainLogicProcess(self)
         self.__initialization_off_all()
 
     def __initialization_off_all(self):
@@ -29,8 +24,20 @@ class UiQtMainWindow(QtWidgets.QMainWindow):
         self.__gui_initialization()
         self.__retranslate_ui()
         self.__move_main_window_to_initial_position()
+        self.__initialize_sub_windows()
         self.__set_all_bindings()
         self.__set_top_hint()
+        self.__define_threads()
+
+    def __define_threads(self):
+        pass
+        # self.finder_thread = PatterFinderThread()
+        # self.finder_thread.signal.connect(self.test)
+
+    def __initialize_sub_windows(self):
+        self.setup_window = UiSetupForm()
+        self.about_window = UiAboutForm()
+        self.manual_window = None
 
     @staticmethod
     def __set_icon_in_taskbar_for_windows() -> None:
@@ -170,8 +177,20 @@ class UiQtMainWindow(QtWidgets.QMainWindow):
         self.actionAbout.triggered.connect(lambda: self.__open_about())
         self.actionManual.triggered.connect(lambda: self.__open_manual())
 
-        # self.runPushButton.clicked.connect()
-        self.nextPushButton.clicked.connect(self.__test)
+        self.runPushButton.clicked.connect(self.__run)
+        # self.nextPushButton.clicked.connect(self.__test)
+
+    def __run(self):
+
+        if not self.executor.if_running():
+            self.runPushButton.setText("Stop")
+            self.executor.start()
+        else:
+            self.runPushButton.setText("Run")
+            self.executor.stop()
+
+    def test(self, data):
+        self.target_window.pull_target_window(offset=data[0], size=data[1])
 
     def __relocate_the_main_window(self, x=None, y=None) -> None:
         if not (isinstance(x, (int, type(None)))
@@ -200,7 +219,7 @@ class UiQtMainWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
 
-        if self.stage_of_run:
+        if self.executor.if_running():
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Warning)
             msg.setWindowIcon(QtGui.QIcon('images/analytics.png'))
@@ -221,32 +240,21 @@ class UiQtMainWindow(QtWidgets.QMainWindow):
             event.accept()
 
     def __close_all_windows(self):
+        self.setup_window = None
         self.about_window = None
+        # self.manual_window = None
 
     def __open_setup(self) -> None:
-        if self.setup_window is None:
-            self.setup_window = UiSetupForm()
-            self.setup_window.setWindowModality(QtCore.Qt.ApplicationModal)
-            self.setup_window.show()
-        else:
-            self.setup_window.setWindowModality(QtCore.Qt.ApplicationModal)
-            self.setup_window.update_data()
-            self.setup_window.show()
+        self.setup_window.setWindowModality(QtCore.Qt.ApplicationModal)
+        self.setup_window.update_data()
+        self.setup_window.show()
 
     def __open_about(self):
-        if self.about_window is None:
-            self.about_window = UiAboutForm()
-            self.about_window.show()
-        else:
-            self.about_window.show()
+        self.about_window.show()
 
     @staticmethod
     def __open_manual():
         open_the_manual()
-
-    @staticmethod
-    def __test():
-        print("test")
 
 
 def run_qt_gui():
